@@ -8,6 +8,7 @@ const createUser = async (req,res) =>{
     let user = new User();
     user.uid = shortid.generate();
     user.email = req.body.email;
+    let role_enums = (User.schema.path('role').enumValues);
 
     if(req.body.role!= undefined && !role_enums.includes(req.body.role)){
         return res.status(500).json({ Message: "Invalid role" });

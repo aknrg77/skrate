@@ -24,13 +24,7 @@ const ticketSchema = new mongoose.Schema({
       type: String,
       enum: ['low', 'medium', 'high'],
       default: 'low'
-    },
-    assignedTo: {
-        type:mongoose.Schema.Types.ObjectId,
-        ref : "User"
-    }
-
-    
+    }    
 
 },{timestamps:true});
 
