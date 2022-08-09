@@ -4,8 +4,7 @@ require('dotenv').config();
 const User = require('../models/user');
 const Ticket = require('../models/ticket');
 const UserTicket = require('../models/userTicket');
-const {ticketPriorityValidator, ticketStatusValidator} = require('../helpers/enumValidator');
-const { query } = require('express');
+const adminValidator = require('../helpers/adminValidator');
 
 const createTicket = async (req,res) =>{
   var {title, description, status, priority, assignedTo} = req.body;
@@ -68,10 +67,78 @@ const getTicket = async (req,res) =>{
 
 }
 
+const markClosedTicket = async (req, res) =>{
+
+  let conditions = {};
+
+  if(!adminValidator){
+    conditions['_id'] = req.user._id;
+  }
+
+  try{
+
+  let user = await UserTicket.findOne({ticket: req.ticket._id}).populate({
+    path: 'user',
+    match: conditions
+  });
+
+ 
+  if(user.length === null){
+    return res.status(401).json({"Message":"Unauthorized!!!"});
+  }
+
+  let user_tickets = await UserTicket.findOne({user: req.user._id}).populate({
+    path: 'ticket',
+    match: {
+      $and:[
+        {
+          priority: {$gte: req.ticket.priority},
+          status: 0,
+          _id: {
+            $ne: req.ticket._id
+          }
+        }
+      ]
+    }
+  });
+
+  if(user_tickets.tickets){
+    return res.status(400).json({"Message":"A higher priority task remains to be closed",
+      "tickets": user_tickets
+    });
+  }
+
+  await Ticket.updateOne({
+    _id: req.ticket._id,
+  }, {status: 1});
+
+}catch(err){
+  return res.status(500).json({ Message: err.message });
+}
+
+return res.status(200).json({"Message":"Ticket Closed!!!"});
+
+
+}
+
+const deleteTicket = async(req, res)=> {
+  let ticketId = req.body.ticketId || '';
+
+  try{
+    await Ticket.findOneAndDelete({uid: ticketId});
+  }catch(error){
+    return res.status(500).json({"Messege" : error.message});
+  }
+
+  return res.status(204);
+}
+
 
 
 module.exports = {
   createTicket,
   getAllTicket,
-  getTicket
+  getTicket,
+  markClosedTicket,
+  deleteTicket
 }

@@ -1,11 +1,11 @@
 const Ticket = require('../models/ticket');
 const User = require('../models/user');
-
-const {ticketPriorityValidator, ticketStatusValidator} = require('../helpers/enumValidator');
+const UserTicket = require('../models/userTicket');
+const adminValidator = require('../helpers/adminValidator');
 
 const validateCreateBody = async (req,res,next) =>{
 
-  if(req.user.role!== 'admin'){
+  if(!adminValidator(req.user)){
     return res.status(401).json({"Message":"Unauthorized!!!"});
   }
 
@@ -16,14 +16,6 @@ const validateCreateBody = async (req,res,next) =>{
       return res.status(404).json({"Messege":"User must exist to be assigned!!!"});
     }
     req.assignedTo = userFound.id;
-
-    if(req.body.status!= undefined && !ticketStatusValidator(req.body.status)){
-      return res.status(500).json({ Message: "Invalid status" });
-    }
-
-    if(req.body.priority!= undefined && !ticketPriorityValidator(req.body.priority)){
-      return res.status(500).json({ Message: "Invalid priority" });
-    }
   
   }catch(error){
     return res.status(500).json({"Messege" : error.message});
@@ -46,7 +38,38 @@ const validateGetParam = (req,res,next) =>{
   return next();
 }
 
+const validateMarkAsClosed = async (req, res, next)=>{  
+  let ticketId = req.body.ticketId || '';
+
+  try{
+    var ticket = await Ticket.findOne({uid: ticketId});
+  }catch(error){
+    return res.status(500).json({"Messege" : error.message});
+  }
+
+  if(!ticket){
+    return res.status(404).json({"Messege" : "ticket Not Present"});
+  }
+
+  if(ticket.status === 1){
+    return res.status(200).json({"Messege" : "ticket already closed"});
+  }
+
+  req.ticket = ticket;
+  next();
+}
+
+const deleteTicket = async (req, res, next)=>{
+  if(!adminValidator(req.user)){
+    return res.status(401).json({"Message":"Unauthorized!!!"});
+  }
+
+  next();
+}
+
 module.exports = {
   validateCreateBody,
-  validateGetParam
+  validateGetParam,
+  validateMarkAsClosed,
+  deleteTicket
 }

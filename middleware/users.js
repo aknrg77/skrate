@@ -1,13 +1,8 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const User = require('../models/user');
-const {userRoleValidator} = require('../helpers/enumValidator');
 
 const validateBody = (req,res,next) =>{
-    if(req.body.role!= undefined && !userRoleValidator(req.body.role)){
-        return res.status(500).json({ Message: "Invalid role" });
-    }
-
     if(req.body.email && req.body.password){
         return next();
     }
