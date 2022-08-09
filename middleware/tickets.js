@@ -5,6 +5,10 @@ const {ticketPriorityValidator, ticketStatusValidator} = require('../helpers/enu
 
 const validateCreateBody = async (req,res,next) =>{
 
+  if(req.user.role!== 'admin'){
+    return res.status(401).json({"Message":"Unauthorized!!!"});
+  }
+
   try{
     let userFound = await User.findOne({email: req.body.assignedTo});
 
