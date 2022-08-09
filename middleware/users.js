@@ -1,8 +1,13 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const User = require('../models/user');
+const {userRoleValidator} = require('../helpers/enumValidator');
 
 const validateBody = (req,res,next) =>{
+    if(req.body.role!= undefined && !userRoleValidator(req.body.role)){
+        return res.status(500).json({ Message: "Invalid role" });
+    }
+
     if(req.body.email && req.body.password){
         return next();
     }
@@ -12,9 +17,10 @@ const validateBody = (req,res,next) =>{
 
 
 const setUser = async (req,res,next) =>{
-    let token = req.headers.authorization.replace('Bearer ','');
+    let token = req.headers.authorization;
 
     if(token){
+        token = token.replace('Bearer ','');
         let user = jwt.verify(token, process.env.SECRET_KEY);
         try{
             let userFind = await User.findOne({uid:user.uid});

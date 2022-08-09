@@ -1,18 +1,14 @@
 const shortid = require('shortid');
-const User = require('../models/user');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
+
+const User = require('../models/user');
 
 const createUser = async (req,res) =>{
     let user = new User();
     user.uid = shortid.generate();
     user.email = req.body.email;
-    let role_enums = (User.schema.path('role').enumValues);
-
-    if(req.body.role!= undefined && !role_enums.includes(req.body.role)){
-        return res.status(500).json({ Message: "Invalid role" });
-    }
     
     try{
         const hashedPassword = await bcrypt.hash(req.body.password,10);
