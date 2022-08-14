@@ -92,7 +92,7 @@ const markClosedTicket = async (req, res) =>{
     match: {
       $and:[
         {
-          priority: {$gte: req.ticket.priority},
+          priority: {$gt: req.ticket.priority},
           status: 0,
           _id: {
             $ne: req.ticket._id
@@ -102,7 +102,7 @@ const markClosedTicket = async (req, res) =>{
     }
   });
 
-  if(user_tickets.tickets){
+  if(user_tickets.ticket){
     return res.status(400).json({"Message":"A higher priority task remains to be closed",
       "tickets": user_tickets
     });
@@ -125,6 +125,11 @@ const deleteTicket = async(req, res)=> {
   let ticketId = req.body.ticketId || '';
 
   try{
+    var ticket = await Ticket.findOne({uid: ticketId});
+    if(!ticket){
+      return res.status(404).json({"Message":"Ticket Not Found!!!"});
+    }
+    await UserTicket.findOneAndDelete({ticket: ticket._id});
     await Ticket.findOneAndDelete({uid: ticketId});
   }catch(error){
     return res.status(500).json({"Messege" : error.message});

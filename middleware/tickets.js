@@ -25,19 +25,6 @@ const validateCreateBody = async (req,res,next) =>{
   return next();
 }
 
-const validateGetParam = (req,res,next) =>{
-
-  if(req.query.status!= undefined && !ticketStatusValidator(req.query.status)){
-    return res.status(500).json({ Message: "Invalid status" });
-  }
-
-  if(req.query.priority!= undefined && !ticketPriorityValidator(req.query.priority)){
-    return res.status(500).json({ Message: "Invalid priority" });
-  }
-
-  return next();
-}
-
 const validateMarkAsClosed = async (req, res, next)=>{  
   let ticketId = req.body.ticketId || '';
 
@@ -51,7 +38,7 @@ const validateMarkAsClosed = async (req, res, next)=>{
     return res.status(404).json({"Messege" : "ticket Not Present"});
   }
 
-  if(ticket.status === 1){
+  if(ticket.status === "1"){
     return res.status(200).json({"Messege" : "ticket already closed"});
   }
 
@@ -69,7 +56,6 @@ const deleteTicket = async (req, res, next)=>{
 
 module.exports = {
   validateCreateBody,
-  validateGetParam,
   validateMarkAsClosed,
   deleteTicket
 }
