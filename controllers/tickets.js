@@ -71,7 +71,7 @@ const markClosedTicket = async (req, res) =>{
 
   let conditions = {};
 
-  if(!adminValidator){
+  if(!adminValidator(req.user)){
     conditions['_id'] = req.user._id;
   }
 
@@ -83,28 +83,29 @@ const markClosedTicket = async (req, res) =>{
   });
 
  
-  if(user.length === null){
+  if(user.ticket === null || user.user === null){
     return res.status(401).json({"Message":"Unauthorized!!!"});
   }
 
-  let user_tickets = await UserTicket.findOne({user: req.user._id}).populate({
+  let user_tickets = await UserTicket.find({user: req.user._id, ticket: {$ne: req.ticket._id}}).populate({
     path: 'ticket',
     match: {
       $and:[
         {
           priority: {$gt: req.ticket.priority},
-          status: 0,
-          _id: {
-            $ne: req.ticket._id
-          }
+          status: 0
         }
       ]
     }
   });
 
-  if(user_tickets.ticket){
+  const mapped_tickets = user_tickets.filter(function(ticket) {
+    return ticket['ticket']!== null
+  }).map((ticket) => (ticket['ticket']));
+
+  if(mapped_tickets.length){
     return res.status(400).json({"Message":"A higher priority task remains to be closed",
-      "tickets": user_tickets
+      "tickets": mapped_tickets
     });
   }
 
